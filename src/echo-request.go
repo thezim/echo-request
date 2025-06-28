@@ -116,8 +116,14 @@ func loggingMiddleware(next http.Handler) http.Handler {
 			log.Printf("Error marshalling request headers for logging: %v", err)
 		}
 
+		requestDump, err := httputil.DumpRequest(r, true) // true to include body
+		if err != nil {
+			fmt.Println(err)
+		}
+
 		log.Printf("Received request: Method=%s URI=%s RemoteAddr=%s UserAgent=%s Headers=%s",
 			r.Method, r.RequestURI, r.RemoteAddr, r.UserAgent(), string(headers))
+		log.Printf("Request Body:\n%s", string(requestDump))
 		next.ServeHTTP(w, r)
 	})
 }
