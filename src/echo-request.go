@@ -110,8 +110,14 @@ func headersHandler(w http.ResponseWriter, r *http.Request) {
 // loggingMiddleware logs incoming HTTP requests.
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Received request: Method=%s URI=%s RemoteAddr=%s UserAgent=%s",
-			r.Method, r.RequestURI, r.RemoteAddr, r.UserAgent())
+		headers, err := json.Marshal(r.Header)
+		if err != nil {
+			// This is unlikely to happen with http.Header, but we log it.
+			log.Printf("Error marshalling request headers for logging: %v", err)
+		}
+
+		log.Printf("Received request: Method=%s URI=%s RemoteAddr=%s UserAgent=%s Headers=%s",
+			r.Method, r.RequestURI, r.RemoteAddr, r.UserAgent(), string(headers))
 		next.ServeHTTP(w, r)
 	})
 }
