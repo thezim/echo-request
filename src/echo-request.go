@@ -14,14 +14,16 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"time"
 )
 
 // Response structure for the /headers endpoint
 type headersResponseData struct {
-	Headers   map[string]string `json:"headers"`
-	IPAddress string            `json:"ip_address"`
-	Timestamp string            `json:"timestamp_utc"`
+	Headers    map[string]string `json:"headers"`
+	IPAddress  string            `json:"ip_address"`
+	Timestamp  string            `json:"timestamp_utc"`
+	RawRequest string            `json:"raw_request"`
 }
 
 // generateSelfSignedCert creates an in-memory self-signed TLS certificate.
@@ -85,10 +87,17 @@ func headersHandler(w http.ResponseWriter, r *http.Request) {
 			simpleHeaders[key] = values[0] // Take the first value
 		}
 	}
+
+	requestDump, err := httputil.DumpRequest(r, true) // true to include body
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	responseData := headersResponseData{
-		Headers:   simpleHeaders,
-		IPAddress: clientIP,
-		Timestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		Headers:    simpleHeaders,
+		IPAddress:  clientIP,
+		Timestamp:  time.Now().UTC().Format(time.RFC3339Nano),
+		RawRequest: string(requestDump),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
